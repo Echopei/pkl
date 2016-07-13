@@ -1,6 +1,30 @@
 #include<stdio.h>
 #include<getopt.h>
 
+typedef struct {
+
+	char **input_bams ;
+	int  n ,m ;//malloc
+}  input_bams_t ;
+
+/*  */
+
+//init()
+// push  
+// free()
+
+typedef  struct {
+
+	input_bams_t inputfile ;
+	int	min_baseq ; //   base quality >= 
+	char  *region_string ;
+	char  *outfile ;
+
+} cmd_t ;
+
+// init 
+//
+
 int RegionParalle_usage()
 {
     fprintf(stderr,"Program: gvc -sv RegionParalle\n");
@@ -25,10 +49,11 @@ int RegionParalle_usage()
 int RegionParalle(int argc, char* argv[])
 {
     int opt;
+	cmd_t p ;
     struct option longopts[]={
-      {"in",required_argument,NULL,"i"},
-      {"out",required_argument,NULL,"o"},
-      {"region",required_argument,NULL,"r"},
+      {"in",required_argument,NULL,'i'},
+      {"out",required_argument,NULL,'o'},
+      {"region",required_argument,NULL,'r'},
       {"Support",required_argument,NULL,'S'},
       {"mode",required_argument,NULL,'s'},
       {"mapping quality",required_argument,NULL,'m'},
@@ -46,7 +71,7 @@ int RegionParalle(int argc, char* argv[])
           case 'S':
           case 's':
           case 'm':
-          case 'b':
+          case 'b': p.min_baseq =  atoi(optarg); break ;
           case 'p': fprintf(stderr,"%s\n",optarg);break;
           case '?': fprintf(stderr,"unknown option: %s\n",optopt);break;
           default: return 1;
