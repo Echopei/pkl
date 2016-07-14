@@ -1,29 +1,69 @@
 #include<stdio.h>
 #include<getopt.h>
+#include<stdlib.h>
+#define DEFAULT_SIZE 1
 
 typedef struct {
-
 	char **input_bams ;
-	int  n ,m ;//malloc
-}  input_bams_t ;
+        int n,m;
+} input_bams_t ;
 
-/*  */
 
-//init()
-// push  
-// free()
+
+int init_input_bams_t(input_bams_t* inputfile)
+{
+   inputfile = malloc(sizeof(input_bams_t));
+   inputfile->m = DEFAULT_SIZE;
+   inputfile->n = 0;
+   inputfile->input_bams = (char**)malloc(inputfile->m*sizeof(char*));
+   return 0;
+}
+int push_input_bams_t(char *optarg,input_bams_t* inputfile)
+{
+   if(inputfile->n == inputfile->m){
+      inputfile->m = inputfile->m << 1;
+      inputfile->input_bams = (char**)realloc(inputfile->input_bams,inputfile->m*sizeof(char*));
+   }
+   inputfile->input_bams[inputfile->n] = optarg;
+   inputfile->n++;
+   return 0;
+}
+void free_input_bams_t(input_bams_t *inputfile)
+{
+    free(inputfile->input_bams);
+}
 
 typedef  struct {
-
-	input_bams_t inputfile ;
 	int	min_baseq ; //   base quality >= 
 	char  *region_string ;
 	char  *outfile ;
-
+        input_bams_t* inputfile;
 } cmd_t ;
 
-// init 
-//
+void init_cmd_t(int optopt,char* optarg,cmd_t cm)
+{
+    if(optarg == NULL){
+       switch(optopt){
+         case 'S': cm.min_baseq = 4;break;
+         case 's':
+         case 'm':
+         case 'p': cm.min_baseq = 0;break;
+         case 'b': cm.min_baseq = 2;break;
+       }  
+    }else{
+       switch(optopt){
+         case 'i': push_input_bams_t(optarg,cm.inputfile);break;
+         case 'o': cm.outfile = optarg;break;
+         case 'r': cm.region_string = optarg;break;
+         case 'S':
+         case 's':
+         case 'm':
+         case 'p':
+         case 'b': cm.min_baseq = atoi(optarg);break;
+       }
+    }
+} 
+
 
 int RegionParalle_usage()
 {
@@ -49,35 +89,37 @@ int RegionParalle_usage()
 int RegionParalle(int argc, char* argv[])
 {
     int opt;
-	cmd_t p ;
+    cmd_t p ;
+    init_input_bams_t(p.inputfile);
     struct option longopts[]={
       {"in",required_argument,NULL,'i'},
       {"out",required_argument,NULL,'o'},
       {"region",required_argument,NULL,'r'},
-      {"Support",required_argument,NULL,'S'},
-      {"mode",required_argument,NULL,'s'},
-      {"mapping quality",required_argument,NULL,'m'},
-      {"base quality",required_argument,NULL,'b'},
-      {"proper_pair",required_argument,NULL,'p'},
+      {"Support",optional_argument,NULL,'S'},
+      {"mode",optional_argument,NULL,'s'},
+      {"mapping quality",optional_argument,NULL,'m'},
+      {"base quality",optional_argument,NULL,'b'},
+      {"proper_pair",optional_argument,NULL,'p'},
       {0,0,0,0} 
     };
     if(argc < 2) return RegionParalle_usage();
     else{
-      while((opt = getopt_long(argc,argv,"i:o:r:S:s:m:b:p:",longopts,NULL))!=-1){
+      while((opt = getopt_long(argc,argv,"i:o:r:S::s::m::b::p::",longopts,NULL))!=-1){
         switch(opt){
-          case 'i':
-          case 'o': fprintf(stderr,"%s\n",optarg);break;
-          case 'r': fprintf(stderr,"%s\n",optarg);break;
+          case 'i': 
+          case 'o': 
+          case 'r': 
           case 'S':
           case 's':
-          case 'm':
-          case 'b': p.min_baseq =  atoi(optarg); break ;
-          case 'p': fprintf(stderr,"%s\n",optarg);break;
+          case 'm': 
+          case 'b': 
+          case 'p': init_cmd_t(optopt,optarg,p);fprintf(stderr,"%s\n",optarg);break;
           case '?': fprintf(stderr,"unknown option: %s\n",optopt);break;
           default: return 1;
        }  
      }
     }
+    free_input_bams_t(p.inputfile);
     return 0;
 }
 
